@@ -27,7 +27,7 @@ a SRU::Response::Scan object with some of the particulars filled in.
 
 The factory method which you must pass in a valid request object:
 SRU::Request::Explain, SRU::Request::Scan or SRU::Request::SearchRetrieve.
-If you fail to pass in the correct object you will be returned undef, 
+If you fail to pass in the correct object you will be returned undef,
 with an appropriate error stored in $SRU::Error.
 
 =cut
@@ -55,7 +55,7 @@ sub newFromRequest {
 =head1 INHERITED METHODS
 
 SRU::Resonse also serves as the base class for the three response types, and
-thus provides some general functionality to the child classes. 
+thus provides some general functionality to the child classes.
 
 =head2 type()
 
@@ -85,10 +85,17 @@ sub addDiagnostic {
 
 sub diagnosticsXML {
     my $self = shift;
-    my $xml = '';
+
+    return '' unless @{ $self->diagnostics() };
+    my $ns = $self->type();
+    if ( $ns eq 'searchRetrieve' or $ns eq 'explain' ) {
+        $ns = $self->version() eq '1.2' ? 'sru' : 'sruResponse';
+    }
+    my $xml = "<$ns:diagnostics xmlns:diag=\"http://docs.oasis-open.org/ns/search-ws/diagnostic\">\n";
     foreach my $d ( @{ $self->diagnostics() } ) {
         $xml .= $d->asXML();
     }
+    $xml .= "</$ns:diagnostics>\n";
     return $xml;
 }
 

@@ -38,11 +38,11 @@ recordPosition, and extraRecordData may also be supplied.
 
 The URI identifier of the XML schema in which the record is encoded. Although
 the request may use the server's assigned short name, the response must always
-be the full URI. 
+be the full URI.
 
 =head2 recordData()
 
-The record itself, either as a string or embedded XML. If would like 
+The record itself, either as a string or embedded XML. If would like
 to pass an object in here you may do so as long as it imlements the
 asXML() method.
 
@@ -60,7 +60,7 @@ or retrieve a record from a SRU::Response::SearchRetrieve object.
 =head2 extraRecordData()
 
 Any extra data associated with the record.  See the section on extensions for
-more information. 
+more information.
 
 =cut
 
@@ -75,6 +75,7 @@ sub new {
 
     ## set some defaults
     $args{recordPacking} = 'xml' if ! exists $args{recordPacking};
+    $args{recordXMLEscaping} = 'xml' if ! exists $args{recordXMLEscaping};
 
     return $class->SUPER::new( \%args );
 }
@@ -82,9 +83,11 @@ sub new {
 SRU::Response::Record->mk_accessors( qw(
     recordSchema
     recordPacking
+    recordXMLEscaping
     recordData
     recordPosition
     extraRecordData
+    version
 ) );
 
 =head2 asXML()
@@ -93,13 +96,24 @@ SRU::Response::Record->mk_accessors( qw(
 
 sub asXML {
     my $self = shift;
+
+    my $ns = $self->version() eq '1.2' ? 'sru' : 'sruResponse';
+
+    my $pack;
+    if ( $self->version() eq '1.2' ) {
+        $pack = element( $ns, 'recordPacking', $self->recordPacking() );
+    }
+    else {
+        $pack = element( $ns, 'recordXMLEscaping', $self->recordXMLEscaping() );
+    }
+
     return 
-        elementNoEscape( 'record', 
-            element( 'recordSchema', $self->recordSchema() ) .
-            element( 'recordPacking', $self->recordPacking() ) . 
-            elementNoEscape( 'recordData', $self->recordData() ) .
-            element( 'recordPosition', $self->recordPosition() ) .
-            element( 'extraRecordData', $self->extraRecordData() ) 
+        elementNoEscape( $ns, 'record',
+            element( $ns, 'recordSchema', $self->recordSchema() ) .
+            $pack .
+            elementNoEscape( $ns, 'recordData', $self->recordData() ) .
+            element( $ns, 'recordPosition', $self->recordPosition() ) .
+            element( $ns, 'extraRecordData', $self->extraRecordData() )
         );
 }
 

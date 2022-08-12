@@ -3,6 +3,7 @@ package SRU::Request;
 
 use strict;
 use warnings;
+use Encode;
 use URI;
 use SRU::Request::Explain;
 use SRU::Request::SearchRetrieve;
@@ -19,7 +20,7 @@ our %PARAMETERS = (
            extraRequestData)],
     'searchRetrieve' => 
         [qw(version query startRecord maximumRecords recordPacking recordSchema
-           recordXPath resultSetTTL sortKeys stylesheet extraRequestData)]
+           recordXMLEscaping recordXPath resultSetTTL sortKeys stylesheet extraRequestData)]
 );
 
 =head1 SYNOPSIS
@@ -83,7 +84,7 @@ sub new {
             $q = URI->new($q);
         }
         if ( UNIVERSAL::isa( $q, 'URI' ) ) {
-            %query = $q->query_form;
+            %query = map { decode_utf8($_) } $q->query_form;
         } else {
             return error( "invalid uri: $q" ) 
         }
@@ -92,6 +93,14 @@ sub new {
     }
 
     my $operation = $query{operation} || 'explain';
+
+    $query{version} ||= '2.0';
+
+    if ( $query{version} eq '2.0' ) {
+        $operation = 'scan'           if $query{scanClause};
+        $operation = 'searchRetrieve' if $query{recordXMLEscaping};
+        $operation = 'searchRetrieve' if $query{query};
+    }
 
     my $request;
     if ( $operation eq 'scan' ) { 
@@ -134,12 +143,14 @@ sub asXML {
     my ($type) = ref($self) =~ /^SRU::Request::(.*)$/;
     $type = "echoed${type}Request";
 
+    my $ns = $self->version() eq '1.2' ? 'sru' : 'sruResponse';
+
     ## build the xml
-    my $xml = "<$type>";
+    my $xml = "<$ns:$type>";
 
     ## add xml for each param if it is available
     foreach my $param ( $self->validParams() ) {
-        $xml .= "<$param>" . escape($self->$param) . "</$param>" 
+        $xml .= "<$ns:$param>" . escape($self->$param) . "</$ns:$param>"
             if $self->$param;
     }
     ## add XCQL if appropriate
@@ -153,7 +164,7 @@ sub asXML {
         }
     }
 
-    $xml .= "</$type>";
+    $xml .= "</$ns:$type>";
     return $xml;
 }
 

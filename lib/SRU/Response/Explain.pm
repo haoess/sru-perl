@@ -39,6 +39,11 @@ sub new {
         stylesheet              => $request->stylesheet(),
     } );
 
+    if ( $self->version ne '1.2' and $self->version ne '2.0' ) {
+        $self->version('2.0');
+        $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(5, 'version', 'sruResponse') );
+    }
+
     return $self;
 }
 
@@ -52,7 +57,7 @@ Add a SRU::Response::Diagnostic object to the response.
 
 =head2 diagnostics()
 
-Returns an array ref of SRU::Response::Diagnostic objects relevant 
+Returns an array ref of SRU::Response::Diagnostic objects relevant
 for the response.
 
 =head2 extraResponseData()
@@ -86,19 +91,26 @@ sub record {
 sub asXML {
     my $self = shift;
     my $stylesheet = $self->stylesheetXML();
+    my $version = $self->version();
     my $echoedExplainRequest = $self->echoedExplainRequest();
+    my $extraResponseData = $self->extraResponseData();
     my $diagnostics = $self->diagnosticsXML();
     my $record = $self->record() ? $self->record()->asXML() : '';
+
+    my $ns    = $self->version() eq '1.2' ? 'sru' : 'sruResponse';
+    my $nsurl = $self->version() eq '1.2' ? 'http://www.loc.gov/zing/srw/' : 'http://docs.oasis-open.org/ns/search-ws/sruResponse';
+
     my $xml = 
 <<"EXPLAIN_XML";
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 $stylesheet
-<explainResponse xmlns="http://www.loc.gov/zing/srw/">
-<version>1.1</version>
+<$ns:explainResponse xmlns:$ns="$nsurl">
+  <$ns:version>$version</$ns:version>
 $record
 $echoedExplainRequest
+$extraResponseData
 $diagnostics
-</explainResponse>
+</$ns:explainResponse>
 EXPLAIN_XML
     return $xml;
 }

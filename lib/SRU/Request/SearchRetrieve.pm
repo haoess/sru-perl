@@ -54,7 +54,7 @@ sub new {
 
 =head2 extraRequestData()
 
-=cut 
+=cut
 
 my @validParams = qw(
     version
@@ -63,6 +63,7 @@ my @validParams = qw(
     maximumRecords
     recordPacking
     recordSchema
+    recordXMLEscaping
     recordXPath
     resultSetTTL
     sortKeys
@@ -82,7 +83,7 @@ SRU::Request::SearchRetrieve->mk_accessors( @validParams );
 
 Fetch the root node of the CQL parse tree for the query.
 
-=cut 
+=cut
 
 sub cql {
     my $self = shift;

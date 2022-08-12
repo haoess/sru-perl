@@ -13,17 +13,17 @@ use SRU::Utils qw( error );
 
 =head1 DESCRIPTION
 
-SRU::Request::Explain is a class for representing SRU 'explain' requests. 
+SRU::Request::Explain is a class for representing SRU 'explain' requests.
 Explain requests essentially ask the server to describe its services.
 
 =head1 METHODS
 
 =head2 new()
 
-The constructor, which you can pass the optional parameters parameters: 
+The constructor, which you can pass the optional parameters parameters:
 version, recordPacking, stylesheet, and extraRequestData parameters.
 
-    my $request = SRU::Request::Explain->new( 
+    my $request = SRU::Request::Explain->new(
         version     => '1.1',
         stylesheet  => 'http://www.example.com/styles/mystyle.xslt'
     );

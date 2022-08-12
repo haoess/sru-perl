@@ -13,7 +13,7 @@ use SRU::Response::Record;
     ## create response from the request object
     my $response = SRU::Response::SearchRetrieve->new( $request );
 
-    ## add records to the response 
+    ## add records to the response
     foreach my $record ( @records ) { $response->addRecord( $record ); }
 
     ## print out the response as XML
@@ -21,7 +21,7 @@ use SRU::Response::Record;
 
 =head1 DESCRIPTION
 
-SRU::Response::SearchRetrieve provides a framework for bundling up 
+SRU::Response::SearchRetrieve provides a framework for bundling up
 the response to a searchRetrieve request. You are responsible for
 generating the XML representation of the records, and the rest
 should be taken care of.
@@ -38,7 +38,7 @@ sub new {
         if ! ref($request) or ! $request->isa( 'SRU::Request::SearchRetrieve' );
 
     my $self =  $class->SUPER::new( {
-        version                         => '1.1',
+        version                         => $request->version(),
         numberOfRecords                 => 0,
         records                         => [],
         resultSetId                     => undef,
@@ -56,6 +56,25 @@ sub new {
     $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(7, 'query') )
         if ! $request->query();
 
+    {
+        no warnings 'numeric';
+        if ( defined $request->startRecord and int($request->startRecord) < 1 ) {
+            $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(6,'startRecord') );
+        }
+        if ( defined $request->startRecord and int($request->startRecord) > 10_000_000 ) {
+            $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(61, 'startRecord') );
+        }
+    }
+    if ( defined $request->maximumRecords and $request->maximumRecords !~ /^[0-9]+$/ ) {
+        $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(6, 'maximumRecords') );
+    }
+    if ( defined $request->recordXMLEscaping and $request->recordXMLEscaping !~ /^(?:string|xml)$/ ) {
+        $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(71, 'recordXMLEscaping') );
+    }
+    if ( defined $request->recordPacking and $request->recordPacking !~ /^(un?)packed$/ ) {
+        $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(71, 'recordPacking') );
+    }
+
     return $self;
 }
 
@@ -63,7 +82,7 @@ sub new {
 
 Returns the number of results associated with the object.
 
-=cut 
+=cut
 
 sub numberOfRecords {
     my ($self,$num) = @_;
@@ -96,10 +115,10 @@ sub addRecord {
 =head2 records()
 
 Gets or sets all the records associated with the object. Be careful
-with this one :) You must pass in an array ref, and expect an 
+with this one :) You must pass in an array ref, and expect an
 array ref back.
 
-=cut 
+=cut
 
 =head2 resultSetId()
 
@@ -142,13 +161,23 @@ sub asXML {
 
     my $numberOfRecords = $self->numberOfRecords();
     my $stylesheet = $self->stylesheetXML();
-    my $version = element( 'version', $self->version() );
+
+    my $ns    = $self->version() eq '1.2' ? 'sru' : 'sruResponse';
+    my $nsurl = $self->version() eq '1.2' ? 'http://www.loc.gov/zing/srw/' : 'http://docs.oasis-open.org/ns/search-ws/sruResponse';
+
+    my $version = element( $ns, 'version', $self->version() );
     my $diagnostics = $self->diagnosticsXML();
-    my $echoedSearchRetrieveRequest = $self->echoedSearchRetrieveRequest();
+    my $echoedSearchRetrieveRequest = '';
+#    if ( !$diagnostics ) {
+        $echoedSearchRetrieveRequest = $self->echoedSearchRetrieveRequest();
+#    }
     my $resultSetIdleTime = $self->resultSetIdleTime();
     my $resultSetId = $self->resultSetId();
 
-    my $extraResponseData = '<extraResponseData>' . $self->extraResponseData() . '</extraResponseData>';
+    my $extraResponseData = '';
+    if ( $self->extraResponseData() ) {
+        $extraResponseData .= '<$ns:extraResponseData>' . $self->extraResponseData() . '</$ns:extraResponseData>';
+    }
     my $xmltitle;
     if( $encoding ) {
         $xmltitle = "<?xml version='1.0' encoding='$encoding'?>";
@@ -161,25 +190,25 @@ sub asXML {
 <<SEARCHRETRIEVE_XML;
 $xmltitle
 $stylesheet
-<searchRetrieveResponse xmlns="http://www.loc.gov/zing/srw/">
+<$ns:searchRetrieveResponse xmlns:$ns="$nsurl">
 $version
-<numberOfRecords>$numberOfRecords</numberOfRecords>
+<$ns:numberOfRecords>$numberOfRecords</$ns:numberOfRecords>
 SEARCHRETRIEVE_XML
 
-    $xml .= "<resultSetId>$resultSetId</resultSetId>" 
+    $xml .= "<$ns:resultSetId>$resultSetId</$ns:resultSetId>"
         if defined($resultSetId);
-    $xml .= "<resultSetIdleTime>$resultSetIdleTime</resultSetIdleTime>\n"
+    $xml .= "<$ns:resultSetIdleTime>$resultSetIdleTime</$ns:resultSetIdleTime>\n"
         if defined($resultSetIdleTime);
 
     if( $numberOfRecords ) {
-        $xml .= "<records>\n";
+        $xml .= "<$ns:records>\n";
 
         ## now add each record
         foreach my $r ( @{ $self->{records} } ) {
             $xml .= $r->asXML()."\n";
         }
 
-        $xml .= "</records>\n";
+        $xml .= "</$ns:records>\n";
     }
 
     $xml .=
@@ -187,7 +216,7 @@ SEARCHRETRIEVE_XML
 $diagnostics
 $extraResponseData 
 $echoedSearchRetrieveRequest
-</searchRetrieveResponse>
+</$ns:searchRetrieveResponse>
 SEARCHRETRIEVE_XML
 
     return $xml;

@@ -10,15 +10,15 @@ use warnings;
 
     # use it as a base controller
     use base qw( Catalyst::Controller::SRU );
-        
+
     # explain, scan and searchretrieve methods
     sub explain {
         my ( $self, $c,
             $sru_request,  # ISA SRU::Request::Explain
-            $sru_response, # ISA SRU::Response::Explain 
+            $sru_response, # ISA SRU::Response::Explain
         ) = @_;
     }
-    
+
     sub scan {
         my ( $self, $c,
             $sru_request,  # ISA SRU::Request::Scan
@@ -27,7 +27,7 @@ use warnings;
         ) = @_;
 
     }
-    
+
     sub searchRetrieve {
         my ( $self, $c,
             $sru_request,  # ISA SRU::Request::SearchRetrieve
@@ -77,7 +77,7 @@ sub index : Private {
         $cql = CQL::Parser->new->parseSafe( $cql );
         push @args, $cql;
         unless ( ref $cql ) {
-            $sru_response->addDiagnostic( SRU::Response::Diagnostic->newFromCode( $cql ) );
+            $sru_response->addDiagnostic( SRU::Response::Diagnostic->newFromCode( 10, 'query' ) );
         }
     }
 

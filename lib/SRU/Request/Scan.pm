@@ -13,7 +13,7 @@ use SRU::Utils qw( error );
 
 =head1 DESCRIPTION
 
-SRU::Request::Scan is a class for representing SRU 'scan' requests. 
+SRU::Request::Scan is a class for representing SRU 'scan' requests.
 
 =head1 METHODS
 
@@ -22,7 +22,7 @@ SRU::Request::Scan is a class for representing SRU 'scan' requests.
 The constructor, which you can pass the parameters: version, scanClause
 responsePosition, maximumTerms, stylesheet, extraRequestData.
 
-    my $request = SRU::Request::Explain->new( 
+    my $request = SRU::Request::Explain->new(
         version     => '1.1',
         scanClause  => 'horses',
     );
@@ -67,9 +67,9 @@ SRU::Request::Scan->mk_accessors( @validParams );
 
 =head2 cql()
 
-Fetch the root node of the CQL parse tree for the scan clause. 
+Fetch the root node of the CQL parse tree for the scan clause.
 
-=cut 
+=cut
 
 sub cql {
     my $self = shift;

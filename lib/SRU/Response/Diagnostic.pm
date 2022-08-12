@@ -122,7 +122,7 @@ to store diagnostic messages.
 Pass in uri, details and message attributes as needed. You'll probably
 find using newFromCode() easier to work with.
 
-=cut 
+=cut
 
 sub new {
     my ($class,%args) = @_;
@@ -138,7 +138,7 @@ complete list of the codes see the SRW/SRU documentation.
 =cut
 
 sub newFromCode {
-    my ($class,$code,$details) = @_;
+    my ($class,$code,$details,$ns) = @_;
     return error( "no such diagnostic code ($code)" )
         if ! exists $DIAG{$code};
     my $desc = $DIAG{$code};
@@ -167,10 +167,11 @@ SRU::Response::Diagnostic->mk_accessors( qw(
 
 sub asXML {
     my $self = shift;
-    my $xml = element( 'uri', $self->uri() );
-    $xml .= element( 'details', $self->details() );
-    $xml .= element( 'message', $self->message() );
-    return elementNoEscape( 'diagnostics', $xml );
+
+    my $xml = element( 'diag', 'uri', $self->uri() );
+    $xml .= element( 'diag', 'details', $self->details() );
+    $xml .= element( 'diag', 'message', $self->message() );
+    return elementNoEscape( 'diag', 'diagnostic', $xml );
 }
 
 1;

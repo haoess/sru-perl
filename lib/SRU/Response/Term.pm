@@ -27,7 +27,7 @@ In addition you can pass the numberOfRecords, displayTerm, whereInList,
 and extraTermData parameters, or set them separately with their
 accessors.
 
-=cut 
+=cut
 
 sub new {
     my ($class, %args) = @_;
@@ -39,24 +39,24 @@ sub new {
 =head2 value()
 
 The term exactly as it appears in the index. This term should be able to be
-sent in a query as is to retrieve the records it derives from. 
+sent in a query as is to retrieve the records it derives from.
 
 =head2 numberOfRecords()
 
 The number of records which would be matched if the index in the request's
-scanClause was searched with the term in the 'value' field. 
+scanClause was searched with the term in the 'value' field.
 
 =head2 displayTerm()
 
 A string to display to the end user in place of the term itself. For example
 this might add back in stopwords which do not appear in the index, or diacritics
-which have been normalised. 
+which have been normalised.
 
 =head2 whereInList()
 
 A flag to indicate the position of the term within the complete term list. It
 must be one of the following values: 'first' (the first term), 'last' (the last
-term), 'only' (the only term) or 'inner' (any other term). 
+term), 'only' (the only term) or 'inner' (any other term).
 
 =head2 extraTermData()
 
@@ -75,17 +75,17 @@ SRU::Response::Term->mk_accessors( qw(
 
 =head2 asXML()
 
-=cut 
+=cut
 
 sub asXML {
     my $self = shift;
     return 
-        elementNoEscape( 'term', 
-            element( 'value', $self->value() ) . 
-            element( 'numberOfRecords', $self->numberOfRecords() ) . 
-            element( 'displayTerm', $self->displayTerm() ) . 
-            element( 'whereInList', $self->whereInList() ) . 
-            elementNoEscape( 'extraTermData', $self->extraTermData() )
+        elementNoEscape( 'scan', 'term',
+            element( 'scan', 'value', $self->value() ) .
+            element( 'scan', 'numberOfRecords', $self->numberOfRecords() ) .
+            element( 'scan', 'displayTerm', $self->displayTerm() ) .
+            element( 'scan', 'whereInList', $self->whereInList() ) .
+            elementNoEscape( 'scan', 'extraTermData', $self->extraTermData() )
         );
 }
 

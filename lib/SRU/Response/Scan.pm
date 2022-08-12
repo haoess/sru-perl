@@ -21,7 +21,7 @@ bundles up the terms that were looked up.
 =head2 new()
 
 The constructor which you must pass a valid SRU::Request::Scan
-object. 
+object.
 
 =cut
 
@@ -39,8 +39,19 @@ sub new {
         stylesheet          => $request->stylesheet()
     } );
 
-    $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(7,'version') )
+    $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(7,'version','scan') )
         if ! $self->version();
+
+    {
+        no warnings 'numeric';
+        if ( $request->maximumTerms and int($request->maximumTerms) < 1 ) {
+            $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(6,'maximumTerms','scan') );
+        }
+    }
+
+    if ( $request->responsePosition and $request->responsePosition !~ /^[0-9]+$/ ) {
+        $self->addDiagnostic( SRU::Response::Diagnostic->newFromCode(6,'responsePosition','scan') );
+    }
 
     return $self;
 }
@@ -54,7 +65,7 @@ must be valid SRU::Response::Term objects.
 
     $response->addTerm( SRU::Response::Term->new( value => 'Foo Fighter' ) );
 
-=cut 
+=cut
 
 sub addTerm {
     my ($self,$term) = @_;
@@ -93,24 +104,26 @@ SRU::Response::Scan->mk_accessors( qw(
 sub asXML {
     my $self = shift;
     my $xml = 
-        "<?xml version='1.0' ?>\n" . 
+        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" .
         $self->stylesheetXML() . "\n" . 
-        "<scanResponse xmlns=\"http://www.loc.gov/zing/srw/\">\n" . 
-        element( 'version', $self->version() );
+        "<scan:scanResponse xmlns:scan=\"http://docs.oasis-open.org/ns/search-ws/scan\">\n" .
+        element( 'scan', 'version', $self->version() );
 
     ## add all the terms if there are some
     if ( @{ $self->terms() } ) {
-        $xml .= "<terms>\n";
+        $xml .= "<scan:terms>\n";
         foreach my $term ( @{ $self->terms() } ) { 
             $xml .= $term->asXML(); 
         }
-        $xml .= "</terms>\n";
+        $xml .= "</scan:terms>\n";
     }
 
     $xml .= $self->diagnosticsXML();
-    $xml .= elementNoEscape( 'extraResponseData', $self->extraResponseData() );
-    $xml .= $self->echoedScanRequest();
-    $xml .= "</scanResponse>";
+    if ( $self->extraResponseData() ) {
+        $xml .= elementNoEscape( 'scan', 'extraResponseData', $self->extraResponseData() );
+    }
+#    $xml .= $self->echoedScanRequest();
+    $xml .= "</scan:scanResponse>";
 
     return( $xml );
 }

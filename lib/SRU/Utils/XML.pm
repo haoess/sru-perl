@@ -25,9 +25,9 @@ Creates an xml element named C<$tag> containing escaped data (C<$text>).
 =cut
 
 sub element {
-    my ($tag, $text) = @_;
+    my ($ns, $tag, $text) = @_;
     return '' if ! defined $text;
-    return "<$tag>" . escape($text) . "</$tag>";
+    return "<$ns:$tag>" . escape($text) . "</$ns:$tag>";
 }
 
 =head2 elementNoEscape( $tag, $text )
@@ -37,9 +37,9 @@ Similar to C<element>, except that C<$text> is not escaped.
 =cut
 
 sub elementNoEscape {
-    my ($tag, $text) = @_;
+    my ($ns, $tag, $text) = @_;
     return '' if ! defined $text;
-    return "<$tag>$text</$tag>";
+    return "<$ns:$tag>$text</$ns:$tag>";
 }
 
 =head2 escape( $text )
@@ -58,7 +58,7 @@ sub escape {
 
 =head2 stylesheet( $uri )
 
-A shortcut method to create an xml-stylesheet declaration. 
+A shortcut method to create an xml-stylesheet declaration.
 
 =cut
 
