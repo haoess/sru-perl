@@ -69,6 +69,7 @@ my @validParams = qw(
     sortKeys
     stylesheet
     extraRequestData
+    x-fcs-context
 );
 
 =head2 validParams()

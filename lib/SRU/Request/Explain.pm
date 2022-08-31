@@ -52,7 +52,8 @@ my @validParams = qw(
     version 
     recordPacking 
     stylesheet 
-    extraRequestData 
+    extraRequestData
+    x-fcs-endpoint-description
 );
 
 =head2 validParams()
